@@ -36,30 +36,30 @@ interface RichTextProps {
 //   })
 // }
 
-function InsertTable({
-  showTable,
-  setShowTable,
-}: {
-  showTable: boolean
-  setShowTable: React.Dispatch<React.SetStateAction<boolean>>
-}) {
-  const [editor] = useLexicalComposerContext()
-  useEffect(() => {
-    if (!showTable) {
-      setShowTable(true)
-    }
-  }, [showTable, setShowTable])
+// function InsertTable({
+//   showTable,
+//   setShowTable,
+// }: {
+//   showTable: boolean
+//   setShowTable: React.Dispatch<React.SetStateAction<boolean>>
+// }) {
+//   const [editor] = useLexicalComposerContext()
+//   useEffect(() => {
+//     if (!showTable) {
+//       setShowTable(true)
+//     }
+//   }, [showTable, setShowTable])
 
-  // useEffect(() => {
-  //   if (showTable) {
-  //     $updateEditorState(editor)
-  //   }
-  // }, [editor, showTable])
-  return <></>
-}
+//   // useEffect(() => {
+//   //   if (showTable) {
+//   //     $updateEditorState(editor)
+//   //   }
+//   // }, [editor, showTable])
+//   return <></>
+// }
 
 const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => {
-  const [editor, state] = useLexicalComposerContext()
+  // const [editor, state] = useLexicalComposerContext()
 
   const handleEditorChange = (editorState: any) => {
     editorState.read(() => {
@@ -75,7 +75,7 @@ const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => 
       <div className="editor-container ">
         {/* <Wrapper> */}
         <ToolbarPlugin />
-        <div className="editor-inner px-4 my-4  border-l-4  border-gray-800">
+        <div className="editor-inner px-4 my-4  border-l  border-[#222222]">
           <RichTextPlugin
             contentEditable={
               <ContentEditable

@@ -13,8 +13,7 @@ const PageClient: React.FC = () => {
   }, [setHeaderTheme])
   return (
     <>
-      <h1>Eddie barboza</h1>
-      <Rich name={'waysOfWorking'} value={waysOfWorking} setValue={setWaysOfWorking} />/
+      <Rich name={'something'} value={waysOfWorking} setValue={setWaysOfWorking} />
     </>
   )
 }

@@ -59,11 +59,10 @@ export default async function Post({ params: paramsPromise }: Args) {
 
       {draft && <LivePreviewListener />}
 
-      <PostHero post={post} />
+      {/* <PostHero post={post} /> */}
 
       <div className="flex flex-col items-center gap-4 pt-8">
         <div className="container">
-          <div className="">Hello world</div>
           {/* <RichTextField
             lexicalEditorConfig={{ namespace: '', theme: {} }}
             clientFeatures={{}}

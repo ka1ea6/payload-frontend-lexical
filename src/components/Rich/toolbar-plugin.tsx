@@ -2,10 +2,13 @@ import { useLexicalComposerContext } from '@payloadcms/richtext-lexical/lexical/
 import { mergeRegister } from '@payloadcms/richtext-lexical/lexical/utils'
 import {
   $createParagraphNode,
+  $getRoot,
   $getSelection,
+  $isParagraphNode,
   $isRangeSelection,
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
+  ElementFormatType,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
   REDO_COMMAND,
@@ -15,6 +18,7 @@ import {
 
 import { $setBlocksType } from '@payloadcms/richtext-lexical/lexical/selection'
 import {
+  $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
 } from '@payloadcms/richtext-lexical/lexical/list'
@@ -24,20 +28,23 @@ import {
   AlignJustify,
   AlignLeft,
   AlignRight,
-  Bold,
+  CaseUpperIcon,
+  ChevronDown,
   EllipsisVertical,
   FlipHorizontal,
   ImageUp,
-  Italic,
   List,
   ListOrdered,
+  Plus,
   RotateCcw,
   RotateCw,
-  Strikethrough,
-  Underline,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { $createHeadingNode, HeadingTagType } from '@payloadcms/richtext-lexical/lexical/rich-text'
+import { Fragment, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
+import {
+  $createHeadingNode,
+  $isHeadingNode,
+  HeadingTagType,
+} from '@payloadcms/richtext-lexical/lexical/rich-text'
 import { InsertInlineImageDialog } from './plugins/ImagePlugin'
 import {
   DropdownMenu,
@@ -45,6 +52,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
+import { cn } from '@/utilities/ui'
+import Bold from '../Icons/Bold'
+import Italic from '../Icons/Italic'
+import Underline from '../Icons/Underline'
+import Strikethrough from '../Icons/StrikeThrough'
+import Subscript from '../Icons/Subscript'
+import Superscript from '../Icons/Superscript'
+import { H1, H2, H3, H4, TextIcon } from '../Icons/Headings'
 
 const LowPriority = 1
 
@@ -61,17 +77,22 @@ export default function ToolbarPlugin() {
   const [isItalic, setIsItalic] = useState(false)
   const [isUnderline, setIsUnderline] = useState(false)
   const [isStrikethrough, setIsStrikethrough] = useState(false)
+  const [isSubscript, setIsSubscript] = useState(false)
+  const [isSuperscript, setIsSuperscript] = useState(false)
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
 
-  const onHeadingSelect = (value: HeadingTagType) => {
+  const [alignment, setAlignment] = useState<ElementFormatType>('left')
+  const [blockType, setBlockType] = useState<HeadingTagType | 'p'>('p')
+
+  const onHeadingSelect = (value: HeadingTagType | 'p') => {
     editor.update(() => {
       const selection = $getSelection()
       if ($isRangeSelection(selection)) {
-        // if (blockType === 'paragraph') {
-        // $setBlocksType(selection, () => $createParagraphNode());
-        // } else {
-        $setBlocksType(selection, () => $createHeadingNode(value))
-        // }
+        if (value === 'p') {
+          $setBlocksType(selection, () => $createParagraphNode())
+        } else {
+          $setBlocksType(selection, () => $createHeadingNode(value))
+        }
       }
     })
   }
@@ -84,6 +105,29 @@ export default function ToolbarPlugin() {
       setIsItalic(selection.hasFormat('italic'))
       setIsUnderline(selection.hasFormat('underline'))
       setIsStrikethrough(selection.hasFormat('strikethrough'))
+      setIsSubscript(selection.hasFormat('subscript'))
+      setIsSuperscript(selection.hasFormat('superscript'))
+
+      const anchorNode = selection.anchor.getNode()
+
+      // Traverse up to find the nearest block node (e.g., ParagraphNode)
+      let blockNode = anchorNode
+      while (blockNode && !$isParagraphNode(blockNode) && blockNode !== $getRoot()) {
+        blockNode = blockNode.getParent()
+      }
+
+      if (blockNode) {
+        // Get the format of the block node, which includes alignment
+        const format = blockNode.getFormatType()
+
+        setAlignment(format || 'left') // Default to 'left' if no format is found
+
+        // Check alignment based on format
+      }
+
+      const tag = anchorNode.getTopLevelElement().__tag
+
+      setBlockType(tag || 'p')
     }
   }, [])
 
@@ -121,191 +165,310 @@ export default function ToolbarPlugin() {
     )
   }, [editor, $updateToolbar])
 
-  return (
-    <div className="flex gap-2 toolbar" ref={toolbarRef}>
-      <button
-        type="button"
-        disabled={!canUndo}
-        onClick={() => {
+  const toolbarActions: {
+    label: string
+    icon: ReactElement
+    onClick: () => void
+    disabled?: boolean
+    value?: string
+    active?: boolean
+  }[][] = [
+    [
+      {
+        label: 'Undo',
+        icon: <RotateCcw width={15} height={15} />,
+        onClick: () => {
           editor.dispatchCommand(UNDO_COMMAND, undefined)
-        }}
-        className="toolbar-item spaced"
-        aria-label="Undo"
-      >
-        <RotateCcw />
-      </button>
-      <button
-        type="button"
-        disabled={!canRedo}
-        onClick={() => {
-          editor.dispatchCommand(REDO_COMMAND, undefined)
-        }}
-        className="toolbar-item"
-        aria-label="Redo"
-      >
-        <RotateCw />
-      </button>
-      <span className="border border-slate-800"></span>
-      <button
-        type="button"
-        onClick={() => {
+        },
+        disabled: !canUndo,
+      },
+      {
+        label: 'Redo',
+        icon: <RotateCw width={15} height={15} />,
+        onClick: () => {
+          editor.dispatchCommand(UNDO_COMMAND, undefined)
+        },
+        disabled: !canRedo,
+      },
+    ],
+    [
+      {
+        label: 'Bold',
+        icon: <Bold />,
+        onClick: () => {
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')
-        }}
-        className={'toolbar-item spaced ' + (isBold ? 'active' : '')}
-        aria-label="Format Bold"
-      >
-        <Bold />
-      </button>
-      <button
-        type="button"
-        onClick={() => {
+        },
+        value: 'bold',
+        active: isBold,
+      },
+      {
+        label: 'Italic',
+        icon: <Italic />,
+        onClick: () => {
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')
-        }}
-        className={'toolbar-item spaced ' + (isItalic ? 'active' : '')}
-        aria-label="Format Italics"
-      >
-        <Italic />
-      </button>
-      <button
-        type="button"
-        onClick={() => {
+        },
+        value: 'italic',
+        active: isItalic,
+      },
+      {
+        label: 'Underline',
+        icon: <Underline />,
+        onClick: () => {
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')
-        }}
-        className={'toolbar-item spaced ' + (isUnderline ? 'active' : '')}
-        aria-label="Format Underline"
-      >
-        <Underline />
-      </button>
-      <button
-        type="button"
-        onClick={() => {
+        },
+        value: 'underline',
+        active: isUnderline,
+      },
+      {
+        label: 'Strikethrough',
+        icon: <Strikethrough />,
+        onClick: () => {
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')
-        }}
-        className={'toolbar-item spaced ' + (isStrikethrough ? 'active' : '')}
-        aria-label="Format Strikethrough"
-      >
-        <Strikethrough />
-      </button>
-      <span className="border border-slate-800"></span>
-      <button
-        type="button"
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')
-        }}
-        className="toolbar-item spaced"
-        aria-label="Left Align"
-      >
-        <AlignLeft />
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')
-        }}
-        className="toolbar-item spaced"
-        aria-label="Center Align"
-      >
-        <AlignCenter />
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')
-        }}
-        className="toolbar-item spaced"
-        aria-label="Right Align"
-      >
-        <AlignRight />
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')
-        }}
-        className="toolbar-item"
-        aria-label="Justify Align"
-      >
-        <AlignJustify />
-      </button>
-      <button
-        onClick={() => {
-          editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
-        }}
-      >
-        <List />
-      </button>
-      <button
-        onClick={() => {
-          editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)
-        }}
-      >
-        <ListOrdered />
-      </button>
+        },
+        value: 'strikethrough',
+        active: isStrikethrough,
+      },
+      {
+        label: 'Subscript',
+        icon: <Subscript />,
+        onClick: () => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'subscript')
+        },
+        value: 'subscript',
+        active: isSubscript,
+      },
+      {
+        label: 'Superscript',
+        icon: <Superscript />,
+        onClick: () => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'superscript')
+        },
+        value: 'superscript',
+        active: isSuperscript,
+      },
+    ],
+  ]
+
+  const alignmentActions = [
+    {
+      label: 'Left Align',
+      direction: 'left',
+      icon: <AlignLeft width={15} height={15} />,
+      onClick: () => {
+        editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')
+      },
+    },
+    {
+      label: 'Center Align',
+      direction: 'center',
+      icon: <AlignCenter width={15} height={15} />,
+      onClick: () => {
+        editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')
+      },
+    },
+    {
+      label: 'Right Align',
+      direction: 'right',
+      icon: <AlignRight width={15} height={15} />,
+      onClick: () => {
+        editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')
+      },
+    },
+    {
+      label: 'Justify Align',
+      direction: 'justify',
+      icon: <AlignJustify width={15} height={15} />,
+      onClick: () => {
+        editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')
+      },
+    },
+  ]
+
+  const listActions = [
+    {
+      label: 'Unordered List',
+      value: 'ul',
+      icon: <List width={15} height={15} />,
+      onClick: () => {
+        editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
+      },
+    },
+    {
+      label: 'Ordered List',
+      value: 'ol',
+      icon: <ListOrdered width={15} height={15} />,
+      onClick: () => {
+        editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)
+      },
+    },
+  ]
+
+  const headingOptions = [
+    {
+      label: 'Normal Text',
+      value: 'p',
+      icon: <TextIcon />,
+      onClick: () => onHeadingSelect('p'),
+    },
+    {
+      label: 'Heading 1',
+      value: 'h1',
+      icon: <H1 />,
+      onClick: () => onHeadingSelect('h1'),
+    },
+    {
+      label: 'Heading 2',
+      value: 'h2',
+      icon: <H2 />,
+      onClick: () => onHeadingSelect('h2'),
+    },
+    {
+      label: 'Heading 3',
+      value: 'h3',
+      icon: <H3 />,
+      onClick: () => onHeadingSelect('h3'),
+    },
+    {
+      label: 'Heading 4',
+      value: 'h4',
+      icon: <H4 />,
+      onClick: () => onHeadingSelect('h4'),
+    },
+    ...listActions,
+    // {
+    //   label: 'Heading 5',
+    //   value: 'h5',
+    //   icon: <CaseUpperIcon width={15} height={15} />,
+    //   onClick: () => onHeadingSelect('h5'),
+    // },
+    // {
+    //   label: 'Heading 6',
+    //   value: 'h6',
+    //   icon: <CaseUpperIcon width={15} height={15} />,
+    //   onClick: () => onHeadingSelect('h6'),
+    // },
+  ]
+
+  const insertActions = [
+    {
+      label: 'Insert Image',
+      icon: <ImageUp width={15} height={15} />,
+      onClick: () => {
+        setImageDialogOpen(true)
+      },
+      disabled: false,
+    },
+    // {
+    //   label: 'Insert Horizontal Rule',
+    //   icon: <FlipHorizontal width={15} height={15} />,
+    //   onClick: () => {
+    //     editor.update(() => {
+    //       const selection = $getSelection()
+    //       if ($isRangeSelection(selection)) {
+    //         const paragraphNode = $createParagraphNode()
+    //         paragraphNode.append('---')
+    //         selection.insertNodes([paragraphNode])
+    //       }
+    //     })
+    //   },
+    // }
+  ]
+
+  return (
+    <div className="flex gap-2 border border-[#222222] py-2 px-2" ref={toolbarRef}>
+      {toolbarActions.map((group, index) => (
+        <Fragment key={`toolbar-option-${group.length}-${index}`}>
+          <div className="flex items-center gap-2">
+            {group.map((action, actionIndex) => (
+              <div
+                role="button"
+                key={actionIndex}
+                // type="button"
+                aria-disabled={action.disabled || false}
+                onClick={action.onClick}
+                className={cn(
+                  'p-1 transition-all flex items-center justify-center rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]',
+                  action.active && 'bg-[#3c3c3c]',
+                )}
+                aria-label={action.label}
+              >
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="text-[#b5b5b5]">{action.icon}</TooltipTrigger>
+                    <TooltipContent>
+                      <p>{action.label}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            ))}
+          </div>
+          <span className="border border-[#222222]"></span>
+        </Fragment>
+      ))}
       <DropdownMenu>
-        <DropdownMenuTrigger>Heading Level</DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => onHeadingSelect('h1')}>H1</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onHeadingSelect('h2')}>H2</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onHeadingSelect('h3')}>H3</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onHeadingSelect('h4')}>H4</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onHeadingSelect('h5')}>H5</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onHeadingSelect('h6')}>H6</DropdownMenuItem>
+        <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
+          {alignmentActions.find((el) => el.direction === alignment)?.icon}
+          {alignmentActions.find((el) => el.direction === alignment)?.label}
+          <ChevronDown width={15} height={15} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-black hover:bg-black">
+          {alignmentActions.map((action, index) => (
+            <DropdownMenuItem
+              key={`${action.label}-${index}`}
+              onClick={action.onClick}
+              className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
+            >
+              <span>{action.icon}</span>
+              <span>{action.label}</span>
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
-      {/* <button
-        onClick={() => {
-          editor.update(() => {
-            const selection = $getSelection()
-            if ($isRangeSelection(selection)) {
-              // if (blockType === 'paragraph') {
-              // $setBlocksType(selection, () => $createParagraphNode());
-              // } else {
-              $setBlocksType(selection, () => $createHeadingNode('h1'))
-              // }
-            }
-          })
-        }}
-      >
-        H1
-      </button>
-      <button
-        onClick={() => {
-          editor.update(() => {
-            const selection = $getSelection()
-            if ($isRangeSelection(selection)) {
-              // if (blockType === 'paragraph') {
-              // $setBlocksType(selection, () => $createParagraphNode());
-              // } else {
-              $setBlocksType(selection, () => $createHeadingNode('h2'))
-              // }
-            }
-          })
-        }}
-      >
-        H2
-      </button> */}
-      <button
-        onClick={() => {
-          setImageDialogOpen(true)
-          // editor.update(() => {
-          //   const selection = $getSelection()
-          //   if ($isRangeSelection(selection)) {
-          //     // if (blockType === 'paragraph') {
-          //     // $setBlocksType(selection, () => $createParagraphNode());
-          //     // } else {
-          //     $setBlocksType(selection, () => $createHeadingNode('h2'))
-          //     // }
-          //   }
-          // })
-        }}
-      >
-        <ImageUp />
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
+          {headingOptions.find((el) => el.value === blockType)?.icon}
+          {headingOptions.find((el) => el.value === blockType)?.label}
+          <ChevronDown width={15} height={15} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-black hover:bg-black">
+          {headingOptions.map((option, index) => (
+            <DropdownMenuItem
+              key={`heading-option-${option.label}-${index}`}
+              onClick={option.onClick}
+              className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
+            >
+              <span>{option.icon}</span>
+              <span>{option.label}</span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
+          <Plus width={15} height={15} />
+          <ChevronDown width={15} height={15} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-black hover:bg-black">
+          {insertActions.map((action, index) => (
+            <DropdownMenuItem
+              key={index}
+              onClick={action.onClick}
+              disabled={action.disabled}
+              className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
+            >
+              <span>{action.icon}</span>
+              <span>{action.label}</span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       {imageDialogOpen && (
         <InsertInlineImageDialog
           activeEditor={editor}
           onClose={() => {
-            console.log('Dialog closed')
+            setImageDialogOpen(false)
           }}
           isOpen={imageDialogOpen} // This should be controlled by state
         />

@@ -25,6 +25,7 @@ import {
   createEditor,
   DecoratorNode,
 } from '@payloadcms/richtext-lexical/lexical'
+import { ArrowRightLeft, Cross, Plus, X } from 'lucide-react'
 import * as React from 'react'
 import { Suspense } from 'react'
 
@@ -247,24 +248,31 @@ export class InlineImageNode extends DecoratorNode<React.JSX.Element> {
   override decorate(): React.JSX.Element {
     return (
       <Suspense fallback={null}>
-        {/* <h1>Here - {this.}</h1> */}
-        <img
-          src={this.__src}
-          alt={this.__altText}
-          width={
-            +this.__width > 200 || isNaN(+this.__width) || typeof this.__width === 'undefined'
-              ? 200
-              : this.__width
-          }
-          // height={
-          //   +this.__height > 50 || isNaN(+this.__height) || typeof this.__height === 'undefined'
-          //     ? 50
-          //     : this.__height
-          // }
-          key={this.getKey()}
-          className="object-cover"
-          // showCaption={this.__showCaption}
-        />
+        <div className="border flex flex-col max-w-[200px] rounded-xl overflow-hidden bg-[#222222]">
+          <div className="flex justify-between items-center border border-slate-800">
+            <img
+              src={this.__src}
+              alt={this.__altText}
+              width={100}
+              height={75}
+              key={this.getKey()}
+              className="object-contain bg-white w-[100px] h-[75px]"
+              // showCaption={this.__showCaption}
+            />
+            {/* <div className="flex gap-2 border-l border-slate-500">
+              <span className="font-bold">Media</span>
+              <button className="px-2">
+                <ArrowRightLeft />
+              </button>
+              <button className="px-2">
+                <X />
+              </button>
+            </div> */}
+          </div>
+          <div className="py-4 flex items-center justify-center">
+            <span>{this.__altText || 'No alt provided'}</span>
+          </div>
+        </div>
         {/* <InlineImageComponent
           src={this.__src}
           altText={this.__altText}

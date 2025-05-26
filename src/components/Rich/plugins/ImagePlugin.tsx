@@ -1,10 +1,3 @@
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
 import { useLexicalComposerContext } from '@payloadcms/richtext-lexical/lexical/react/LexicalComposerContext'
 import { $wrapNodeInElement, mergeRegister } from '@payloadcms/richtext-lexical/lexical/utils'
 import {
@@ -71,7 +64,7 @@ export function InsertInlineImageDialog({
 }) {
   const hasModifier = useRef(false)
 
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   const [src, setSrc] = useState('')
   const [altText, setAltText] = useState('')
   const [showCaption, setShowCaption] = useState(false)
@@ -112,6 +105,12 @@ export function InsertInlineImageDialog({
   }, [activeEditor])
 
   useEffect(() => {
+    if (!open) {
+      onClose()
+    }
+  }, [open])
+
+  useEffect(() => {
     setOpen(isOpen)
   }, [isOpen])
 
@@ -148,7 +147,7 @@ export function InsertInlineImageDialog({
               data-test-id="image-modal-alt-text-input"
             />
           </div>
-
+          {/* 
           <Select
             // style={{ marginBottom: '1em', width: '290px' }}
             // aria="Position"
@@ -159,9 +158,9 @@ export function InsertInlineImageDialog({
             <option value="left">Left</option>
             <option value="right">Right</option>
             <option value="full">Full Width</option>
-          </Select>
+          </Select> */}
 
-          <div className="Input__wrapper">
+          {/* <div className="Input__wrapper">
             <input
               id="caption"
               type="checkbox"
@@ -169,7 +168,7 @@ export function InsertInlineImageDialog({
               onChange={handleShowCaptionChange}
             />
             <label htmlFor="caption">Show Caption</label>
-          </div>
+          </div> */}
 
           {/* <DialogActions> */}
           <Button
@@ -239,10 +238,10 @@ export default function InlineImagePlugin({
   return null
 }
 
-const TRANSPARENT_IMAGE =
-  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-const img = document.createElement('img')
-img.src = TRANSPARENT_IMAGE
+// const TRANSPARENT_IMAGE =
+//   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+// const img = document.createElement('img')
+// img.src = TRANSPARENT_IMAGE
 
 function onDragStart(event: DragEvent): boolean {
   const node = getImageNodeInSelection()
@@ -254,7 +253,7 @@ function onDragStart(event: DragEvent): boolean {
     return false
   }
   dataTransfer.setData('text/plain', '_')
-  dataTransfer.setDragImage(img, 0, 0)
+  // dataTransfer.setDragImage(img, 0, 0)
   dataTransfer.setData(
     'application/x-lexical-drag',
     JSON.stringify({
