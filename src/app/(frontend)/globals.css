@@ -269,7 +269,7 @@
 
   .editor-heading-h1 {
     font-size: 24px;
-    color: rgb(5, 5, 5);
+    /* color: rgb(5, 5, 5); */
     font-weight: 400;
     margin: 0;
     margin-bottom: 12px;
@@ -278,7 +278,7 @@
 
   .editor-heading-h2 {
     font-size: 15px;
-    color: rgb(101, 103, 107);
+    /* color: rgb(101, 103, 107); */
     font-weight: 700;
     margin: 0;
     margin-top: 10px;
@@ -459,7 +459,7 @@
   }
 
   .toolbar .toolbar-item:hover:not([disabled]) {
-    background-color: #eee;
+    background-color: #4a4a4a;
   }
 
   .toolbar .divider {

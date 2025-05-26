@@ -27,14 +27,24 @@ import {
   Bold,
   EllipsisVertical,
   FlipHorizontal,
+  ImageUp,
   Italic,
+  List,
+  ListOrdered,
   RotateCcw,
   RotateCw,
   Strikethrough,
   Underline,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { $createHeadingNode } from '@payloadcms/richtext-lexical/lexical/rich-text'
+import { $createHeadingNode, HeadingTagType } from '@payloadcms/richtext-lexical/lexical/rich-text'
+import { InsertInlineImageDialog } from './plugins/ImagePlugin'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 
 const LowPriority = 1
 
@@ -51,6 +61,20 @@ export default function ToolbarPlugin() {
   const [isItalic, setIsItalic] = useState(false)
   const [isUnderline, setIsUnderline] = useState(false)
   const [isStrikethrough, setIsStrikethrough] = useState(false)
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
+
+  const onHeadingSelect = (value: HeadingTagType) => {
+    editor.update(() => {
+      const selection = $getSelection()
+      if ($isRangeSelection(selection)) {
+        // if (blockType === 'paragraph') {
+        // $setBlocksType(selection, () => $createParagraphNode());
+        // } else {
+        $setBlocksType(selection, () => $createHeadingNode(value))
+        // }
+      }
+    })
+  }
 
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection()
@@ -208,16 +232,27 @@ export default function ToolbarPlugin() {
           editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
         }}
       >
-        Bullet List
+        <List />
       </button>
       <button
         onClick={() => {
           editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)
         }}
       >
-        Ordered list
+        <ListOrdered />
       </button>
-      <button
+      <DropdownMenu>
+        <DropdownMenuTrigger>Heading Level</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={() => onHeadingSelect('h1')}>H1</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onHeadingSelect('h2')}>H2</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onHeadingSelect('h3')}>H3</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onHeadingSelect('h4')}>H4</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onHeadingSelect('h5')}>H5</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onHeadingSelect('h6')}>H6</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {/* <button
         onClick={() => {
           editor.update(() => {
             const selection = $getSelection()
@@ -248,7 +283,33 @@ export default function ToolbarPlugin() {
         }}
       >
         H2
+      </button> */}
+      <button
+        onClick={() => {
+          setImageDialogOpen(true)
+          // editor.update(() => {
+          //   const selection = $getSelection()
+          //   if ($isRangeSelection(selection)) {
+          //     // if (blockType === 'paragraph') {
+          //     // $setBlocksType(selection, () => $createParagraphNode());
+          //     // } else {
+          //     $setBlocksType(selection, () => $createHeadingNode('h2'))
+          //     // }
+          //   }
+          // })
+        }}
+      >
+        <ImageUp />
       </button>
+      {imageDialogOpen && (
+        <InsertInlineImageDialog
+          activeEditor={editor}
+          onClose={() => {
+            console.log('Dialog closed')
+          }}
+          isOpen={imageDialogOpen} // This should be controlled by state
+        />
+      )}
     </div>
   )
 }

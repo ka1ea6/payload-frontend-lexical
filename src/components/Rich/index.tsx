@@ -11,7 +11,7 @@ import { ListPlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalLi
 import { TablePlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalTablePlugin'
 import { ListItemNode, ListNode } from '@payloadcms/richtext-lexical/lexical/list'
 import { HeadingNode } from '@payloadcms/richtext-lexical/lexical/rich-text'
-import { TableCellNode, TableNode, TableRowNode } from '@payloadcms/richtext-lexical/lexical/table'
+// import { TableCellNode, TableNode, TableRowNode } from '@payloadcms/richtext-lexical/lexical/table'
 
 import { OnChangePlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalOnChangePlugin'
 // import { INSERT_TABLE_COMMAND, TableCellNode, TableNode, TableRowNode } from '@payloadcms/richtext-lexical/lexical/table'
@@ -19,6 +19,8 @@ import { LexicalEditor } from '@payloadcms/richtext-lexical/lexical'
 import React, { Dispatch, PropsWithChildren, SetStateAction, useEffect, useState } from 'react'
 
 import ToolbarPlugin from './toolbar-plugin'
+import { InlineImageNode } from './ImageNode'
+import InlineImagePlugin from './plugins/ImagePlugin'
 
 interface RichTextProps {
   value?: string
@@ -88,9 +90,10 @@ const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => 
           <AutoFocusPlugin />
           <ListPlugin />
           <OnChangePlugin onChange={handleEditorChange} />
+          <InlineImagePlugin />
 
           {/* <TreeViewPlugin /> */}
-          <TablePlugin />
+          {/* <TablePlugin /> */}
         </div>
         {/* </Wrapper> */}
       </div>
@@ -102,7 +105,7 @@ const RichText: React.FC<RichTextProps> = ({ setValue, value, name }) => {
   const editorConfig = {
     namespace: 'Lexical editor',
     // nodes: [TableNode, TableCellNode, TableRowNode],
-    nodes: [ListNode, ListItemNode, HeadingNode, TableNode, TableCellNode, TableRowNode],
+    nodes: [ListNode, ListItemNode, HeadingNode, InlineImageNode],
     // Handling of errors during update
     onError(error: Error) {
       console.error('Lexical error:', error)
@@ -112,11 +115,11 @@ const RichText: React.FC<RichTextProps> = ({ setValue, value, name }) => {
     theme: {
       code: 'editor-code',
       heading: {
-        h1: 'editor-heading-h1',
-        h2: 'editor-heading-h2',
-        h3: 'editor-heading-h3',
-        h4: 'editor-heading-h4',
-        h5: 'editor-heading-h5',
+        h1: 'text-4xl',
+        h2: 'text-3xl',
+        h3: 'text-2xl',
+        h4: 'text-lg',
+        h5: 'text-sm',
       },
       image: 'editor-image',
       link: 'editor-link',
