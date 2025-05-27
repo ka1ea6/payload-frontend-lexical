@@ -94,7 +94,7 @@
 }
 
 html {
-  opacity: 0;
+  /* opacity: 0; */
 }
 
 html[data-theme='dark'],

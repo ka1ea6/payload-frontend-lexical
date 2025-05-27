@@ -24,17 +24,9 @@ import {
   $isInlineImageNode,
   InlineImageNode,
   InlineImagePayload,
-} from '../ImageNode'
-// import Button from '../../ui/Button'
-// import {DialogActions} from '../../ui/Dialog'
-// import FileInput from '../../ui/FileInput'
-// import TextInput from '../../ui/TextInput'
-// import Select from '../../ui/Select'
-// import '../../ui/Checkbox.css'
-
-import type { Position } from '../ImageNode'
+} from '../nodes/image-node'
+import type { Position } from '../nodes/image-node'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DialogDescription } from '@radix-ui/react-dialog'

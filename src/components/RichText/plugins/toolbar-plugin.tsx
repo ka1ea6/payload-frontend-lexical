@@ -456,11 +456,11 @@ export default function ToolbarPlugin() {
           />
         )}
       </div>
-      <div className="flex items-center justify-center mr-5">
+      {/* <div className="flex items-center justify-center mr-5">
         <button className="text-[#b5b5b5]">
           <Save width={20} height={20} />
         </button>
-      </div>
+      </div> */}
     </div>
   )
 }
