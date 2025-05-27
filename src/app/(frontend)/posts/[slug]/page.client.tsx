@@ -1,5 +1,5 @@
 'use client'
-import Rich from '@/components/Rich'
+import RichText from '@/components/RichText'
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import React, { useEffect, useState } from 'react'
 
@@ -8,12 +8,14 @@ const PageClient: React.FC = () => {
   const { setHeaderTheme } = useHeaderTheme()
   const [waysOfWorking, setWaysOfWorking] = useState<any>()
 
+  // console.log('waysOfWorking', typeof waysOfWorking)
+
   useEffect(() => {
     setHeaderTheme('dark')
   }, [setHeaderTheme])
   return (
     <>
-      <Rich name={'something'} value={waysOfWorking} setValue={setWaysOfWorking} />
+      <RichText name={'something'} value={waysOfWorking} setValue={setWaysOfWorking} />
     </>
   )
 }

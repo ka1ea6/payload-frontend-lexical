@@ -1,84 +1,115 @@
-import { MediaBlock } from '@/blocks/MediaBlock/Component'
-import {
-  DefaultNodeTypes,
-  SerializedBlockNode,
-  SerializedLinkNode,
-  type DefaultTypedEditorState,
-} from '@payloadcms/richtext-lexical'
+'use client'
 
-// import {} from '@payloadcms/richtext-lexical/lexical'
-import {
-  JSXConvertersFunction,
-  LinkJSXConverter,
-  RichText as ConvertRichText,
-} from '@payloadcms/richtext-lexical/react'
+import { AutoFocusPlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalAutoFocusPlugin'
+import { LexicalComposer } from '@payloadcms/richtext-lexical/lexical/react/LexicalComposer'
+import { ContentEditable } from '@payloadcms/richtext-lexical/lexical/react/LexicalContentEditable'
+import { LexicalErrorBoundary } from '@payloadcms/richtext-lexical/lexical/react/LexicalErrorBoundary'
+import { HistoryPlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalHistoryPlugin'
+import { RichTextPlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalRichTextPlugin'
+import { ListPlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalListPlugin'
+import { ListItemNode, ListNode } from '@payloadcms/richtext-lexical/lexical/list'
+import { HeadingNode } from '@payloadcms/richtext-lexical/lexical/rich-text'
 
-import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
+import { OnChangePlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalOnChangePlugin'
+import React, { Dispatch, SetStateAction } from 'react'
 
-import type {
-  BannerBlock as BannerBlockProps,
-  CallToActionBlock as CTABlockProps,
-  MediaBlock as MediaBlockProps,
-} from '@/payload-types'
-import { BannerBlock } from '@/blocks/Banner/Component'
-import { CallToActionBlock } from '@/blocks/CallToAction/Component'
-import { cn } from '@/utilities/ui'
-import { RichTextField } from '@payloadcms/richtext-lexical/client'
+import ToolbarPlugin from './plugins/toolbar-plugin'
+import { InlineImageNode } from './nodes/image-node'
+import InlineImagePlugin from './plugins/image-plugin'
 
-type NodeTypes =
-  | DefaultNodeTypes
-  | SerializedBlockNode<CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps>
-
-const internalDocToHref = ({ linkNode }: { linkNode: SerializedLinkNode }) => {
-  const { value, relationTo } = linkNode.fields.doc!
-  if (typeof value !== 'object') {
-    throw new Error('Expected value to be an object')
-  }
-  const slug = value.slug
-  return relationTo === 'posts' ? `/posts/${slug}` : `/${slug}`
+interface RichTextProps {
+  value?: string
+  setValue: Dispatch<SetStateAction<any>>
+  name: string
 }
+const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => {
+  const handleEditorChange = (editorState: any) => {
+    editorState.read(() => {
+      const json = editorState.toJSON()
+      setValue(() => {
+        return json
+      })
+    })
+  }
 
-const jsxConverters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) => ({
-  ...defaultConverters,
-  ...LinkJSXConverter({ internalDocToHref }),
-  blocks: {
-    banner: ({ node }) => <BannerBlock className="col-start-2 mb-4" {...node.fields} />,
-    mediaBlock: ({ node }) => (
-      <MediaBlock
-        className="col-start-1 col-span-3"
-        imgClassName="m-0"
-        {...node.fields}
-        captionClassName="mx-auto max-w-[48rem]"
-        enableGutter={false}
-        disableInnerContainer={true}
-      />
-    ),
-    code: ({ node }) => <CodeBlock className="col-start-2" {...node.fields} />,
-    cta: ({ node }) => <CallToActionBlock {...node.fields} />,
-  },
-})
-
-type Props = {
-  data: DefaultTypedEditorState
-  enableGutter?: boolean
-  enableProse?: boolean
-} & React.HTMLAttributes<HTMLDivElement>
-
-export default function RichText(props: Props) {
-  const { className, enableProse = true, enableGutter = true, ...rest } = props
   return (
-    <ConvertRichText
-      converters={jsxConverters}
-      className={cn(
-        'payload-richtext',
-        {
-          container: enableGutter,
-          'max-w-none': !enableGutter,
-          'mx-auto prose md:prose-md dark:prose-invert': enableProse,
-        },
-        className,
-      )}
-      {...rest}
-    />
+    <div className="w-full px-10">
+      <div className="editor-container ">
+        <ToolbarPlugin />
+        <div className="px-4 my-4  border-l  border-[#222222]">
+          <RichTextPlugin
+            contentEditable={
+              <ContentEditable
+                name={name}
+                className="focus:outline-none focus:ring-0 focus-visible:outline-none min-h-40"
+              />
+            }
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <HistoryPlugin />
+          <AutoFocusPlugin />
+          <ListPlugin />
+          <OnChangePlugin onChange={handleEditorChange} />
+          <InlineImagePlugin />
+        </div>
+      </div>
+    </div>
   )
 }
+
+const RichText: React.FC<RichTextProps> = ({ setValue, value, name }) => {
+  const editorConfig = {
+    namespace: 'Lexical editor',
+    // nodes: [TableNode, TableCellNode, TableRowNode],
+    nodes: [ListNode, ListItemNode, HeadingNode, InlineImageNode],
+    // Handling of errors during update
+    onError(error: Error) {
+      console.error('Lexical error:', error)
+      throw error
+    },
+    // The editor theme
+    theme: {
+      code: 'editor-code',
+      heading: {
+        h1: 'text-4xl',
+        h2: 'text-3xl',
+        h3: 'text-2xl',
+        h4: 'text-lg',
+        h5: 'text-sm',
+      },
+      image: 'editor-image',
+      link: 'editor-link',
+      list: {
+        listitem: 'editor-listitem',
+        nested: {
+          listitem: 'editor-nested-listitem',
+        },
+        ol: 'list-decimal',
+        ul: 'list-disc',
+      },
+      ltr: 'ltr',
+      paragraph: 'editor-paragraph',
+      placeholder: 'editor-placeholder',
+      quote: 'editor-quote',
+      rtl: 'rtl',
+      text: {
+        bold: 'editor-text-bold font-bold',
+        code: 'editor-text-code',
+        hashtag: 'editor-text-hashtag',
+        italic: 'editor-text-italic italic',
+        overflowed: 'editor-text-overflowed',
+        strikethrough: 'editor-text-strikethrough line-through',
+        underline: 'editor-text-underline underline',
+        underlineStrikethrough: 'underline line-through',
+      },
+    },
+  }
+
+  return (
+    <LexicalComposer initialConfig={editorConfig}>
+      <RichTextContent value={value} setValue={setValue} name={name} />
+    </LexicalComposer>
+  )
+}
+
+export default RichText

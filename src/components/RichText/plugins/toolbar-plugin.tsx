@@ -11,14 +11,12 @@ import {
   ElementFormatType,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
-  REDO_COMMAND,
   SELECTION_CHANGE_COMMAND,
   UNDO_COMMAND,
 } from '@payloadcms/richtext-lexical/lexical'
 
 import { $setBlocksType } from '@payloadcms/richtext-lexical/lexical/selection'
 import {
-  $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
 } from '@payloadcms/richtext-lexical/lexical/list'
@@ -28,16 +26,14 @@ import {
   AlignJustify,
   AlignLeft,
   AlignRight,
-  CaseUpperIcon,
   ChevronDown,
-  EllipsisVertical,
-  FlipHorizontal,
   ImageUp,
   List,
   ListOrdered,
   Plus,
   RotateCcw,
   RotateCw,
+  Save,
 } from 'lucide-react'
 import { Fragment, ReactElement, useCallback, useEffect, useRef, useState } from 'react'
 import {
@@ -45,27 +41,27 @@ import {
   $isHeadingNode,
   HeadingTagType,
 } from '@payloadcms/richtext-lexical/lexical/rich-text'
-import { InsertInlineImageDialog } from './plugins/ImagePlugin'
+import { InsertInlineImageDialog } from './image-plugin'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
+} from '../../ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/tooltip'
 import { cn } from '@/utilities/ui'
-import Bold from '../Icons/Bold'
-import Italic from '../Icons/Italic'
-import Underline from '../Icons/Underline'
-import Strikethrough from '../Icons/StrikeThrough'
-import Subscript from '../Icons/Subscript'
-import Superscript from '../Icons/Superscript'
-import { H1, H2, H3, H4, TextIcon } from '../Icons/Headings'
+import Bold from '../../Icons/Bold'
+import Italic from '../../Icons/Italic'
+import Underline from '../../Icons/Underline'
+import Strikethrough from '../../Icons/StrikeThrough'
+import Subscript from '../../Icons/Subscript'
+import Superscript from '../../Icons/Superscript'
+import { H1, H2, H3, H4, TextIcon } from '../../Icons/Headings'
 
 const LowPriority = 1
 
 function Divider() {
-  return <div className="divider" />
+  return <span className="border border-[#222222]"></span>
 }
 
 export default function ToolbarPlugin() {
@@ -358,121 +354,113 @@ export default function ToolbarPlugin() {
       },
       disabled: false,
     },
-    // {
-    //   label: 'Insert Horizontal Rule',
-    //   icon: <FlipHorizontal width={15} height={15} />,
-    //   onClick: () => {
-    //     editor.update(() => {
-    //       const selection = $getSelection()
-    //       if ($isRangeSelection(selection)) {
-    //         const paragraphNode = $createParagraphNode()
-    //         paragraphNode.append('---')
-    //         selection.insertNodes([paragraphNode])
-    //       }
-    //     })
-    //   },
-    // }
   ]
 
   return (
-    <div className="flex gap-2 border border-[#222222] py-2 px-2" ref={toolbarRef}>
-      {toolbarActions.map((group, index) => (
-        <Fragment key={`toolbar-option-${group.length}-${index}`}>
-          <div className="flex items-center gap-2">
-            {group.map((action, actionIndex) => (
-              <div
-                role="button"
-                key={actionIndex}
-                // type="button"
-                aria-disabled={action.disabled || false}
+    <div className="flex justify-between border border-[#222222] py-2 px-2">
+      <div className="flex gap-2 " ref={toolbarRef}>
+        {toolbarActions.map((group, index) => (
+          <Fragment key={`toolbar-option-${group.length}-${index}`}>
+            <div className="flex items-center gap-2">
+              {group.map((action, actionIndex) => (
+                <div
+                  role="button"
+                  key={actionIndex}
+                  // type="button"
+                  aria-disabled={action.disabled || false}
+                  onClick={action.onClick}
+                  className={cn(
+                    'p-1 transition-all flex items-center justify-center rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]',
+                    action.active && 'bg-[#3c3c3c]',
+                  )}
+                  aria-label={action.label}
+                >
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger className="text-[#b5b5b5]">{action.icon}</TooltipTrigger>
+                      <TooltipContent>
+                        <p>{action.label}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              ))}
+            </div>
+            <Divider />
+          </Fragment>
+        ))}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
+            {alignmentActions.find((el) => el.direction === alignment)?.icon}
+            {alignmentActions.find((el) => el.direction === alignment)?.label}
+            <ChevronDown width={15} height={15} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-black hover:bg-black">
+            {alignmentActions.map((action, index) => (
+              <DropdownMenuItem
+                key={`${action.label}-${index}`}
                 onClick={action.onClick}
-                className={cn(
-                  'p-1 transition-all flex items-center justify-center rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]',
-                  action.active && 'bg-[#3c3c3c]',
-                )}
-                aria-label={action.label}
+                className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
               >
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger className="text-[#b5b5b5]">{action.icon}</TooltipTrigger>
-                    <TooltipContent>
-                      <p>{action.label}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+                <span>{action.icon}</span>
+                <span>{action.label}</span>
+              </DropdownMenuItem>
             ))}
-          </div>
-          <span className="border border-[#222222]"></span>
-        </Fragment>
-      ))}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
-          {alignmentActions.find((el) => el.direction === alignment)?.icon}
-          {alignmentActions.find((el) => el.direction === alignment)?.label}
-          <ChevronDown width={15} height={15} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-black hover:bg-black">
-          {alignmentActions.map((action, index) => (
-            <DropdownMenuItem
-              key={`${action.label}-${index}`}
-              onClick={action.onClick}
-              className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
-            >
-              <span>{action.icon}</span>
-              <span>{action.label}</span>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
-          {headingOptions.find((el) => el.value === blockType)?.icon}
-          {headingOptions.find((el) => el.value === blockType)?.label}
-          <ChevronDown width={15} height={15} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-black hover:bg-black">
-          {headingOptions.map((option, index) => (
-            <DropdownMenuItem
-              key={`heading-option-${option.label}-${index}`}
-              onClick={option.onClick}
-              className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
-            >
-              <span>{option.icon}</span>
-              <span>{option.label}</span>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
-          <Plus width={15} height={15} />
-          <ChevronDown width={15} height={15} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-black hover:bg-black">
-          {insertActions.map((action, index) => (
-            <DropdownMenuItem
-              key={index}
-              onClick={action.onClick}
-              disabled={action.disabled}
-              className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
-            >
-              <span>{action.icon}</span>
-              <span>{action.label}</span>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {imageDialogOpen && (
-        <InsertInlineImageDialog
-          activeEditor={editor}
-          onClose={() => {
-            setImageDialogOpen(false)
-          }}
-          isOpen={imageDialogOpen} // This should be controlled by state
-        />
-      )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
+            {headingOptions.find((el) => el.value === blockType)?.icon}
+            {headingOptions.find((el) => el.value === blockType)?.label}
+            <ChevronDown width={15} height={15} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-black hover:bg-black">
+            {headingOptions.map((option, index) => (
+              <DropdownMenuItem
+                key={`heading-option-${option.label}-${index}`}
+                onClick={option.onClick}
+                className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
+              >
+                <span>{option.icon}</span>
+                <span>{option.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
+            <Plus width={15} height={15} />
+            <ChevronDown width={15} height={15} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-black hover:bg-black">
+            {insertActions.map((action, index) => (
+              <DropdownMenuItem
+                key={index}
+                onClick={action.onClick}
+                disabled={action.disabled}
+                className="flex items-center gap-2 text-xs text-[#b5b5b5] hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c]"
+              >
+                <span>{action.icon}</span>
+                <span>{action.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {imageDialogOpen && (
+          <InsertInlineImageDialog
+            activeEditor={editor}
+            onClose={() => {
+              setImageDialogOpen(false)
+            }}
+            isOpen={imageDialogOpen} // This should be controlled by state
+          />
+        )}
+      </div>
+      <div className="flex items-center justify-center mr-5">
+        <button className="text-[#b5b5b5]">
+          <Save width={20} height={20} />
+        </button>
+      </div>
     </div>
   )
 }
