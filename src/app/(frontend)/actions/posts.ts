@@ -45,13 +45,10 @@ export async function addPostContentAction(prevState: any, formData: FormData) {
 
   const res = await payload.update({
     collection: 'posts',
-    id: '6835d660cf15886157e5c4cf',
+    id: data.postId,
     data: {
       content: JSON.parse(data.content),
     },
   })
-
-  console.log('res', res)
-
   return { status: 'success', data: { postId: data.postId } }
 }

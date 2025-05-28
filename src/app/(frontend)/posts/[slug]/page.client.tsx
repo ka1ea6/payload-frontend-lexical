@@ -25,7 +25,6 @@ const PageClient: React.FC<PageClientProps> = ({ post }) => {
 
   const getPostContent = async (postId: string) => {
     const response = await getPostContentAction(postId)
-    console.log('getPostContent response:', response)
     if (response.error) {
       console.error('Error fetching post content:', response.error)
       return
