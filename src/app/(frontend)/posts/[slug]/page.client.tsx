@@ -50,9 +50,9 @@ const PageClient: React.FC<PageClientProps> = ({ post }) => {
 
   useEffect(() => {
     if (state && state.status === 'success') {
-      // console.log('Post content saved successfully:', state.data)
       toast.success('Post content saved successfully!')
-      // Optionally, you can show a success message or perform any other action
+    } else if (state && state.status === 'error') {
+      toast.error(`Error saving post content: ${state.message || 'An error occurred'}`)
     }
   }, [state])
 

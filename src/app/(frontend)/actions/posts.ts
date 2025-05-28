@@ -43,12 +43,23 @@ export async function addPostContentAction(prevState: any, formData: FormData) {
 
   const payload = await getPayload({ config })
 
-  const res = await payload.update({
-    collection: 'posts',
-    id: data.postId,
-    data: {
-      content: JSON.parse(data.content),
-    },
-  })
-  return { status: 'success', data: { postId: data.postId } }
+  try {
+    const res = await payload.update({
+      collection: 'posts',
+      id: data.postId,
+      data: {
+        content: JSON.parse(data.content),
+      },
+      overrideLock: false,
+    })
+    return { status: 'success', data: { postId: data.postId } }
+  } catch (err) {
+    return {
+      status: 'error',
+      message:
+        err.status === 423
+          ? 'Document is locked for editing'
+          : 'An error occurred while updating the post content.',
+    }
+  }
 }
