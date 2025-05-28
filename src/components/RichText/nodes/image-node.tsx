@@ -85,7 +85,7 @@ export class InlineImageNode extends DecoratorNode<React.JSX.Element> {
   __position: Position
 
   static override getType(): string {
-    return 'inline-image'
+    return 'upload'
   }
 
   static override clone(node: InlineImageNode): InlineImageNode {
@@ -112,10 +112,10 @@ export class InlineImageNode extends DecoratorNode<React.JSX.Element> {
       position,
     })
     const nestedEditor = node.__caption
-    const editorState = nestedEditor.parseEditorState(caption.editorState)
-    if (!editorState.isEmpty()) {
-      nestedEditor.setEditorState(editorState)
-    }
+    // const editorState = nestedEditor.parseEditorState(caption.editorState)
+    // if (!editorState.isEmpty()) {
+    //   nestedEditor.setEditorState(editorState)
+    // }
     return node
   }
 
@@ -164,7 +164,7 @@ export class InlineImageNode extends DecoratorNode<React.JSX.Element> {
       height: this.__height === 'inherit' ? 0 : this.__height,
       showCaption: this.__showCaption,
       src: this.getSrc(),
-      type: 'inline-image',
+      type: 'upload',
       version: 1,
       width: this.__width === 'inherit' ? 0 : this.__width,
       position: this.__position,

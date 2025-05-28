@@ -11,11 +11,11 @@ import { ListItemNode, ListNode } from '@payloadcms/richtext-lexical/lexical/lis
 import { HeadingNode } from '@payloadcms/richtext-lexical/lexical/rich-text'
 
 import { OnChangePlugin } from '@payloadcms/richtext-lexical/lexical/react/LexicalOnChangePlugin'
-import React, { Dispatch, SetStateAction } from 'react'
+import React, { Dispatch, SetStateAction, useEffect } from 'react'
 
 import ToolbarPlugin from './plugins/toolbar-plugin'
 import { InlineImageNode } from './nodes/image-node'
-import InlineImagePlugin from './plugins/image-plugin'
+import { useLexicalComposerContext } from '@payloadcms/richtext-lexical/lexical/react/LexicalComposerContext'
 
 interface RichTextProps {
   value?: string
@@ -23,6 +23,8 @@ interface RichTextProps {
   name: string
 }
 const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => {
+  const [editor] = useLexicalComposerContext()
+
   const handleEditorChange = (editorState: any) => {
     editorState.read(() => {
       const json = editorState.toJSON()
@@ -32,9 +34,18 @@ const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => 
     })
   }
 
+  useEffect(() => {
+    // if (value) {
+    editor.update(() => {
+      editor.setEditorState(editor.parseEditorState(value as any))
+    })
+    // }
+    // editor?.setEditorState(value)
+  }, [])
+
   return (
     <div className="w-full px-10">
-      <div className="editor-container ">
+      <div className=" ">
         <ToolbarPlugin />
         <div className="px-4 my-4  border-l  border-[#222222]">
           <RichTextPlugin
@@ -50,7 +61,7 @@ const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => 
           <AutoFocusPlugin />
           <ListPlugin />
           <OnChangePlugin onChange={handleEditorChange} />
-          <InlineImagePlugin />
+          {/* <InlineImagePlugin /> */}
         </div>
       </div>
     </div>

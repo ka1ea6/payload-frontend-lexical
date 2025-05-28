@@ -109,7 +109,9 @@ export default function ToolbarPlugin() {
       // Traverse up to find the nearest block node (e.g., ParagraphNode)
       let blockNode = anchorNode
       while (blockNode && !$isParagraphNode(blockNode) && blockNode !== $getRoot()) {
-        blockNode = blockNode.getParent()
+        const curr = blockNode.getParent()
+        if (!curr) continue
+        blockNode = curr
       }
 
       if (blockNode) {
@@ -121,7 +123,7 @@ export default function ToolbarPlugin() {
         // Check alignment based on format
       }
 
-      const tag = anchorNode.getTopLevelElement().__tag
+      const tag = (anchorNode.getTopLevelElement() as any)?.__tag
 
       setBlockType(tag || 'p')
     }
@@ -427,7 +429,7 @@ export default function ToolbarPlugin() {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <DropdownMenu>
+        {/* <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
             <Plus width={15} height={15} />
             <ChevronDown width={15} height={15} />
@@ -445,8 +447,8 @@ export default function ToolbarPlugin() {
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu>
-        {imageDialogOpen && (
+        </DropdownMenu> */}
+        {/* {imageDialogOpen && (
           <InsertInlineImageDialog
             activeEditor={editor}
             onClose={() => {
@@ -454,7 +456,7 @@ export default function ToolbarPlugin() {
             }}
             isOpen={imageDialogOpen} // This should be controlled by state
           />
-        )}
+        )} */}
       </div>
       {/* <div className="flex items-center justify-center mr-5">
         <button className="text-[#b5b5b5]">
