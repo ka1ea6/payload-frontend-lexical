@@ -1,13 +1,15 @@
 import { useLexicalComposerContext } from '@payloadcms/richtext-lexical/lexical/react/LexicalComposerContext'
-import { mergeRegister } from '@payloadcms/richtext-lexical/lexical/utils'
+import { $insertNodeToNearestRoot, mergeRegister } from '@payloadcms/richtext-lexical/lexical/utils'
 import {
   $createParagraphNode,
+  $getPreviousSelection,
   $getRoot,
   $getSelection,
   $isParagraphNode,
   $isRangeSelection,
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
+  COMMAND_PRIORITY_EDITOR,
   ElementFormatType,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
@@ -41,7 +43,7 @@ import {
   $isHeadingNode,
   HeadingTagType,
 } from '@payloadcms/richtext-lexical/lexical/rich-text'
-import { InsertInlineImageDialog } from './image-plugin'
+import { INSERT_UPLOAD_COMMAND, InsertInlineImageDialog, InsertUploadPayload } from './image-plugin'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +59,8 @@ import Strikethrough from '../../Icons/StrikeThrough'
 import Subscript from '../../Icons/Subscript'
 import Superscript from '../../Icons/Superscript'
 import { H1, H2, H3, H4, TextIcon } from '../../Icons/Headings'
+import { $createUploadNode } from '../nodes/image-node'
+// import { $createUploadNode } from '@payloadcms/richtext-lexical/client'
 
 const LowPriority = 1
 
@@ -159,6 +163,41 @@ export default function ToolbarPlugin() {
           return false
         },
         LowPriority,
+      ),
+      mergeRegister(
+        editor.registerCommand<InsertUploadPayload>(
+          INSERT_UPLOAD_COMMAND,
+          (payload: InsertUploadPayload) => {
+            editor.update(() => {
+              const selection = $getSelection() || $getPreviousSelection()
+
+              if ($isRangeSelection(selection)) {
+                const uploadNode = $createUploadNode({
+                  data: {
+                    id: payload.id,
+                    fields: payload.fields,
+                    relationTo: payload.relationTo,
+                    value: payload.value,
+                  },
+                })
+
+                // we need to get the focus node before inserting the block node, as $insertNodeToNearestRoot can change the focus node
+                const { focus } = selection
+                const focusNode = focus.getNode()
+                // Insert upload node BEFORE potentially removing focusNode, as $insertNodeToNearestRoot errors if the focusNode doesn't exist
+                $insertNodeToNearestRoot(uploadNode)
+
+                // Delete the node it it's an empty paragraph
+                if ($isParagraphNode(focusNode) && !focusNode.__first) {
+                  focusNode.remove()
+                }
+              }
+            })
+
+            return true
+          },
+          COMMAND_PRIORITY_EDITOR,
+        ),
       ),
     )
   }, [editor, $updateToolbar])
@@ -429,7 +468,7 @@ export default function ToolbarPlugin() {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        {/* <DropdownMenu>
+        <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center justify-center gap-2 px-2 py-1 rounded hover:bg-[#3c3c3c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#3a3a3a] focus:ring-[#3c3c3c] text-[#b5b5b5] text-xs">
             <Plus width={15} height={15} />
             <ChevronDown width={15} height={15} />
@@ -447,8 +486,8 @@ export default function ToolbarPlugin() {
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu> */}
-        {/* {imageDialogOpen && (
+        </DropdownMenu>
+        {imageDialogOpen && (
           <InsertInlineImageDialog
             activeEditor={editor}
             onClose={() => {
@@ -456,13 +495,8 @@ export default function ToolbarPlugin() {
             }}
             isOpen={imageDialogOpen} // This should be controlled by state
           />
-        )} */}
+        )}
       </div>
-      {/* <div className="flex items-center justify-center mr-5">
-        <button className="text-[#b5b5b5]">
-          <Save width={20} height={20} />
-        </button>
-      </div> */}
     </div>
   )
 }

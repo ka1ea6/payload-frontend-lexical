@@ -14,8 +14,10 @@ import { OnChangePlugin } from '@payloadcms/richtext-lexical/lexical/react/Lexic
 import React, { Dispatch, SetStateAction, useEffect } from 'react'
 
 import ToolbarPlugin from './plugins/toolbar-plugin'
-import { InlineImageNode } from './nodes/image-node'
+import { UploadNode } from './nodes/image-node'
 import { useLexicalComposerContext } from '@payloadcms/richtext-lexical/lexical/react/LexicalComposerContext'
+import InlineImagePlugin from './plugins/image-plugin'
+// import { UploadNode } from '@payloadcms/richtext-lexical/client'
 
 interface RichTextProps {
   value?: string
@@ -35,11 +37,11 @@ const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => 
   }
 
   useEffect(() => {
-    // if (value) {
-    editor.update(() => {
-      editor.setEditorState(editor.parseEditorState(value as any))
-    })
-    // }
+    if (value) {
+      editor.update(() => {
+        editor.setEditorState(editor.parseEditorState(value as any))
+      })
+    }
     // editor?.setEditorState(value)
   }, [])
 
@@ -61,7 +63,8 @@ const RichTextContent: React.FC<RichTextProps> = ({ setValue, value, name }) => 
           <AutoFocusPlugin />
           <ListPlugin />
           <OnChangePlugin onChange={handleEditorChange} />
-          {/* <InlineImagePlugin /> */}
+          {/* <UploadPlugin clientProps={{ collections: {} }} /> */}
+          <InlineImagePlugin />
         </div>
       </div>
     </div>
@@ -72,7 +75,7 @@ const RichText: React.FC<RichTextProps> = ({ setValue, value, name }) => {
   const editorConfig = {
     namespace: 'Lexical editor',
     // nodes: [TableNode, TableCellNode, TableRowNode],
-    nodes: [ListNode, ListItemNode, HeadingNode, InlineImageNode],
+    nodes: [ListNode, ListItemNode, HeadingNode, UploadNode],
     // Handling of errors during update
     onError(error: Error) {
       console.error('Lexical error:', error)

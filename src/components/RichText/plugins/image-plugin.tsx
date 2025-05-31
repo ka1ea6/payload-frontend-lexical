@@ -1,14 +1,11 @@
 import { useLexicalComposerContext } from '@payloadcms/richtext-lexical/lexical/react/LexicalComposerContext'
-import { $wrapNodeInElement, mergeRegister } from '@payloadcms/richtext-lexical/lexical/utils'
+import { mergeRegister } from '@payloadcms/richtext-lexical/lexical/utils'
 import {
-  $createParagraphNode,
   $createRangeSelection,
+  $getNodeByKey,
   $getSelection,
-  $insertNodes,
   $isNodeSelection,
-  $isRootOrShadowRoot,
   $setSelection,
-  COMMAND_PRIORITY_EDITOR,
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_LOW,
   createCommand,
@@ -19,19 +16,14 @@ import {
   LexicalEditor,
 } from '@payloadcms/richtext-lexical/lexical'
 import React, { useEffect, useRef, useState } from 'react'
-import {
-  $createInlineImageNode,
-  $isInlineImageNode,
-  InlineImageNode,
-  InlineImagePayload,
-} from '../nodes/image-node'
-import type { Position } from '../nodes/image-node'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DialogDescription } from '@radix-ui/react-dialog'
+import { $createUploadNode, $isUploadNode, UploadNode } from '@payloadcms/richtext-lexical/client'
+import { UploadData } from '@payloadcms/richtext-lexical'
 
-export type InsertInlineImagePayload = Readonly<InlineImagePayload>
+export type InsertUploadPayload = Readonly<Omit<UploadData, 'id'> & Partial<Pick<UploadData, 'id'>>>
 
 const CAN_USE_DOM: boolean =
   typeof window !== 'undefined' &&
@@ -41,9 +33,12 @@ const CAN_USE_DOM: boolean =
 const getDOMSelection = (targetWindow: Window | null): Selection | null =>
   CAN_USE_DOM ? (targetWindow || window).getSelection() : null
 
-export const INSERT_INLINE_IMAGE_COMMAND: LexicalCommand<InlineImagePayload> = createCommand(
-  'INSERT_INLINE_IMAGE_COMMAND',
-)
+export const INSERT_UPLOAD_WITH_DRAWER_COMMAND: LexicalCommand<{
+  replace: { nodeKey: string } | false
+}> = createCommand('INSERT_UPLOAD_WITH_DRAWER_COMMAND')
+
+export const INSERT_UPLOAD_COMMAND: LexicalCommand<InsertUploadPayload> =
+  createCommand('INSERT_UPLOAD_COMMAND')
 
 export function InsertInlineImageDialog({
   activeEditor,
@@ -60,7 +55,7 @@ export function InsertInlineImageDialog({
   const [src, setSrc] = useState('')
   const [altText, setAltText] = useState('')
   const [showCaption, setShowCaption] = useState(false)
-  const [position, setPosition] = useState<Position>('left')
+  const [position, setPosition] = useState<any>('left')
 
   const isDisabled = src === ''
 
@@ -69,7 +64,7 @@ export function InsertInlineImageDialog({
   }
 
   const handlePositionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setPosition(e.target.value as Position)
+    setPosition(e.target.value as any)
   }
 
   const loadImage = (files: FileList | null) => {
@@ -106,9 +101,53 @@ export function InsertInlineImageDialog({
     setOpen(isOpen)
   }, [isOpen])
 
+  const insertUpload = ({
+    editor,
+    relationTo,
+    replaceNodeKey,
+    value,
+  }: {
+    editor: LexicalEditor
+    relationTo: string
+    replaceNodeKey: null | string
+    value: number | string
+  }) => {
+    if (!replaceNodeKey) {
+      const res = editor.dispatchCommand(INSERT_UPLOAD_COMMAND, {
+        // @ts-expect-error - TODO: fix this
+        fields: null,
+        relationTo: 'media',
+        value,
+      })
+    } else {
+      editor.update(() => {
+        const node = $getNodeByKey(replaceNodeKey)
+        if (node) {
+          node.replace(
+            $createUploadNode({
+              data: {
+                // @ts-expect-error - TODO: fix this
+                fields: null,
+                relationTo: 'media',
+                value,
+              },
+            }),
+          )
+        }
+      })
+    }
+  }
+
   const handleOnClick = () => {
     const payload = { altText, src, showCaption, position }
-    activeEditor.dispatchCommand(INSERT_INLINE_IMAGE_COMMAND, payload)
+
+    insertUpload({
+      editor: activeEditor,
+      relationTo: 'media',
+      replaceNodeKey: null,
+      value: payload.src,
+    })
+
     setOpen(false)
     onClose()
   }
@@ -139,29 +178,6 @@ export function InsertInlineImageDialog({
               data-test-id="image-modal-alt-text-input"
             />
           </div>
-          {/* 
-          <Select
-            // style={{ marginBottom: '1em', width: '290px' }}
-            // aria="Position"
-            name="position"
-            // id="position-select"
-            onChange={(value: 'left' | 'right' | 'full') => handlePositionChange(value)}
-          >
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-            <option value="full">Full Width</option>
-          </Select> */}
-
-          {/* <div className="Input__wrapper">
-            <input
-              id="caption"
-              type="checkbox"
-              checked={showCaption}
-              onChange={handleShowCaptionChange}
-            />
-            <label htmlFor="caption">Show Caption</label>
-          </div> */}
-
           {/* <DialogActions> */}
           <Button
             data-test-id="image-modal-file-upload-btn"
@@ -185,24 +201,11 @@ export default function InlineImagePlugin({
   const [editor] = useLexicalComposerContext()
 
   useEffect(() => {
-    if (!editor.hasNodes([InlineImageNode])) {
+    if (!editor.hasNodes([UploadNode])) {
       throw new Error('ImagesPlugin: ImageNode not registered on editor')
     }
 
     return mergeRegister(
-      editor.registerCommand<InsertInlineImagePayload>(
-        INSERT_INLINE_IMAGE_COMMAND,
-        (payload) => {
-          const imageNode = $createInlineImageNode(payload)
-          $insertNodes([imageNode])
-          if ($isRootOrShadowRoot(imageNode.getParentOrThrow())) {
-            $wrapNodeInElement(imageNode, $createParagraphNode).selectEnd()
-          }
-
-          return true
-        },
-        COMMAND_PRIORITY_EDITOR,
-      ),
       editor.registerCommand<DragEvent>(
         DRAGSTART_COMMAND,
         (event) => {
@@ -230,11 +233,6 @@ export default function InlineImagePlugin({
   return null
 }
 
-// const TRANSPARENT_IMAGE =
-//   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-// const img = document.createElement('img')
-// img.src = TRANSPARENT_IMAGE
-
 function onDragStart(event: DragEvent): boolean {
   const node = getImageNodeInSelection()
   if (!node) {
@@ -245,23 +243,6 @@ function onDragStart(event: DragEvent): boolean {
     return false
   }
   dataTransfer.setData('text/plain', '_')
-  // dataTransfer.setDragImage(img, 0, 0)
-  dataTransfer.setData(
-    'application/x-lexical-drag',
-    JSON.stringify({
-      data: {
-        altText: node.__altText,
-        caption: node.__caption,
-        height: node.__height,
-        key: node.getKey(),
-        showCaption: node.__showCaption,
-        src: node.__src,
-        width: node.__width,
-      },
-      type: 'image',
-    }),
-  )
-
   return true
 }
 
@@ -281,10 +262,6 @@ function onDrop(event: DragEvent, editor: LexicalEditor): boolean {
   if (!node) {
     return false
   }
-  const data = getDragImageData(event)
-  if (!data) {
-    return false
-  }
   event.preventDefault()
   if (canDropImage(event)) {
     const range = getDragSelection(event)
@@ -294,32 +271,18 @@ function onDrop(event: DragEvent, editor: LexicalEditor): boolean {
       rangeSelection.applyDOMRange(range)
     }
     $setSelection(rangeSelection)
-    editor.dispatchCommand(INSERT_INLINE_IMAGE_COMMAND, data)
   }
   return true
 }
 
-function getImageNodeInSelection(): InlineImageNode | null {
+function getImageNodeInSelection(): UploadNode | null {
   const selection = $getSelection()
   if (!$isNodeSelection(selection)) {
     return null
   }
   const nodes = selection.getNodes()
   const node = nodes[0]
-  return $isInlineImageNode(node) ? node : null
-}
-
-function getDragImageData(event: DragEvent): null | InsertInlineImagePayload {
-  const dragData = event.dataTransfer?.getData('application/x-lexical-drag')
-  if (!dragData) {
-    return null
-  }
-  const { type, data } = JSON.parse(dragData)
-  if (type !== 'image') {
-    return null
-  }
-
-  return data
+  return $isUploadNode(node) ? node : null
 }
 
 declare global {

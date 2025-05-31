@@ -27,7 +27,6 @@ import {
   PreviewField,
 } from '@payloadcms/plugin-seo/fields'
 import { slugField } from '@/fields/slug'
-import { TableFeatureClient } from '@payloadcms/richtext-lexical/client'
 
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
@@ -49,6 +48,7 @@ export const Posts: CollectionConfig<'posts'> = {
       description: true,
     },
   },
+
   admin: {
     defaultColumns: ['title', 'slug', 'updatedAt'],
     livePreview: {

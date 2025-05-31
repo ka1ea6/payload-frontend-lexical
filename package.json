@@ -40,6 +40,8 @@
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "bson": "^6.10.3",
+    "bson-objectid": "^2.0.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cross-env": "^7.0.3",

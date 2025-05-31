@@ -65,6 +65,12 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.7
         version: 1.2.7(@types/react-dom@19.1.2(@types/react@19.1.0))(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      bson:
+        specifier: ^6.10.3
+        version: 6.10.3
+      bson-objectid:
+        specifier: ^2.0.4
+        version: 2.0.4
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
